@@ -46,8 +46,7 @@ namespace WebContentSample
             var newArguments = new List<string>();
             foreach (var arg in arguments)
             {
-                string outArg = arg;
-                PrepareArgument(arg, ref outArg);
+               var outArg = PrepareArgument(arg);
                 newArguments.Add(outArg);
             }
             var source = new CancellationTokenSource();
@@ -58,7 +57,18 @@ namespace WebContentSample
                 scriptName, newArguments.ToArray()).AsTask();
         }
 
-        partial void PrepareArgument(string argument, ref string newArgument);
-    }
+        private static Func<string, string> ReplaceLiterals = txt =>
+#if WINDOWS_UWP
+        txt;
+#else
+        txt.Replace("\\", "\\\\").Replace("\n", "\\n").Replace("\r", "\\r").Replace("\"", "\\\"").Replace("\'", "\\\'").Replace("`", "\\`").Replace("^", "\\^");
 #endif 
-}
+
+        private string PrepareArgument(string argument)
+        {
+            if (argument == null) return argument;
+            return ReplaceLiterals(argument);
+        }
+    }
+#endif
+    }
