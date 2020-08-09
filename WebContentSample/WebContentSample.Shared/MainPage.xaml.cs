@@ -38,27 +38,24 @@ namespace WebContentSample
 
         private async void markedCtrl_MarkedReady(object sender, EventArgs args)
         {
-            var markdownScript = (await GetEmbeddedFileStreamAsync(GetType(), "marked.min.js")).ReadToEnd();
+            await markedCtrl.LoadMarkdownFromFile("SharedAssets.md");
 
-            await markedCtrl.InvokeScriptAsync("eval", new[] { markdownScript });
+            //var markdownScript = (await GetEmbeddedFileStreamAsync(GetType(), "marked.min.js")).ReadToEnd();
 
-            var markdown = (await GetEmbeddedFileStreamAsync(GetType(), "SharedAssets.md")).ReadToEnd();
+            //await markedCtrl.InvokeScriptAsync("eval", new[] { markdownScript });
 
-            //markdown = markdown.Replace("\\n", "\\\\n").Replace("\\r", "\\\\r");
-            markdown = markdown.Replace("\n", "\\n").Replace("\r", "\\r");
+            //var markdown = (await GetEmbeddedFileStreamAsync(GetType(), "SharedAssets.md")).ReadToEnd();
 
-            var id = HtmlContentId;
+            ////markdown = markdown.Replace("\\n", "\\\\n").Replace("\\r", "\\\\r");
+            //markdown = markdown.Replace("\n", "\\n").Replace("\r", "\\r");
 
-            var script = $@"document.getElementById('{id}').innerHTML = marked('{markdown}');";
-            await markedCtrl.InvokeScriptAsync("eval", new[] { script });
+            //var id = HtmlContentId;
+
+            //var script = $@"document.getElementById('{id}').innerHTML = marked('{markdown}');";
+            //await markedCtrl.InvokeScriptAsync("eval", new[] { script });
         }
 
-        private string HtmlContentId =>
-#if __WASM__
-            markedCtrl.GetHtmlId();
-#else
-            "content";
-#endif
+
         private async void WebView_NavigationCompleted(WebView sender, WebViewNavigationCompletedEventArgs args)
         {
             //var markdownScript = (await GetEmbeddedFileStreamAsync(GetType(), "marked.min.js")).ReadToEnd();
@@ -107,20 +104,20 @@ namespace WebContentSample
        
 
 
-        public static async Task<Stream> GetEmbeddedFileStreamAsync(Type assemblyType, string fileName)
-        {
-            await Task.Yield();
+        //public static async Task<Stream> GetEmbeddedFileStreamAsync(Type assemblyType, string fileName)
+        //{
+        //    await Task.Yield();
 
-            var manifestName = assemblyType.GetTypeInfo().Assembly
-                .GetManifestResourceNames()
-                .FirstOrDefault(n => n.EndsWith(fileName.Replace(" ", "_"), StringComparison.OrdinalIgnoreCase));
+        //    var manifestName = assemblyType.GetTypeInfo().Assembly
+        //        .GetManifestResourceNames()
+        //        .FirstOrDefault(n => n.EndsWith(fileName.Replace(" ", "_"), StringComparison.OrdinalIgnoreCase));
 
-            if (manifestName == null)
-            {
-                throw new InvalidOperationException($"Failed to find resource [{fileName}]");
-            }
+        //    if (manifestName == null)
+        //    {
+        //        throw new InvalidOperationException($"Failed to find resource [{fileName}]");
+        //    }
 
-            return assemblyType.GetTypeInfo().Assembly.GetManifestResourceStream(manifestName);
-        }
+        //    return assemblyType.GetTypeInfo().Assembly.GetManifestResourceStream(manifestName);
+        //}
     }
 }
