@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+using Uno.Extensions;
 #if !WINDOWS_UWP
 using Uno.Foundation;
 #endif
@@ -42,7 +43,7 @@ UserControl
             Loaded += JavaScriptControl_Loaded;
         }
 
-        protected string HtmlContentId =>
+        private string HtmlContentId =>
 #if __WASM__
             this.GetHtmlId();
 #else
@@ -64,7 +65,14 @@ UserControl
 #endif
         }
 
-        protected abstract void LoadJavaScript();
+        protected async Task LoadEmbeddedJavaScriptFile(string filename)
+        {
+            var markdownScript = (await GetEmbeddedFileStreamAsync(GetType(), filename)).ReadToEnd();
+
+            await InvokeScriptAsync(markdownScript);
+        }
+
+        protected abstract Task LoadJavaScript();
 
 #if !__WASM__
         private void NavigationCompleted(WebView sender, WebViewNavigationCompletedEventArgs args)
@@ -72,6 +80,12 @@ UserControl
             LoadJavaScript();
         }
 #endif
+
+        protected async Task UpdateHtmlFromScript(string contentScript)
+        {
+            var script = $@"document.getElementById('{HtmlContentId}').innerHTML = {contentScript};";
+            await InvokeScriptAsync(script);
+        }
 
         public async Task InvokeScriptAsync(string scriptToRun)
         {

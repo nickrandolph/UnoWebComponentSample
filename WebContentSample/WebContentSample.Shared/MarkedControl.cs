@@ -10,11 +10,9 @@ namespace WebContentSample
 
         public string MarkedEmbeddedJavaScriptFile { get; set; } = "marked.min.js";
 
-        protected override async void LoadJavaScript()
+        protected override async Task LoadJavaScript()
         {
-            var markdownScript = (await GetEmbeddedFileStreamAsync(GetType(), MarkedEmbeddedJavaScriptFile)).ReadToEnd();
-
-            await InvokeScriptAsync(markdownScript );
+            await LoadEmbeddedJavaScriptFile(MarkedEmbeddedJavaScriptFile);
 
             MarkedReady?.Invoke(this, EventArgs.Empty);
         }
@@ -23,10 +21,7 @@ namespace WebContentSample
         {
             markdown = markdown.Replace("\n", "\\n").Replace("\r", "\\r");
 
-            var id = HtmlContentId;
-
-            var script = $@"document.getElementById('{id}').innerHTML = marked('{markdown}');";
-            await InvokeScriptAsync(script);
+            await UpdateHtmlFromScript($"marked('{markdown}')");
         }
 
         public async Task LoadMarkdownFromFile(string embeddedFileName)
