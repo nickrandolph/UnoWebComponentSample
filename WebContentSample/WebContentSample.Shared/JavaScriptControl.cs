@@ -12,8 +12,10 @@ using Uno.Foundation;
 #if __WASM__
 using Uno.Foundation.Interop;
 #endif
+using Windows.UI;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
+using Windows.UI.Xaml.Media;
 
 namespace WebContentSample
 {
@@ -34,8 +36,10 @@ UserControl
 
         public JavaScriptControl()
         {
+
 #if !__WASM__
             Content = internalWebView = new WebView();
+            internalWebView.DefaultBackgroundColor = Colors.Transparent;
             internalWebView.NavigationCompleted += NavigationCompleted;
 #else
             _handle = JSObjectHandle.Create(this);
@@ -52,10 +56,11 @@ UserControl
 
         private void JavaScriptControl_Loaded(object sender, Windows.UI.Xaml.RoutedEventArgs e)
         {
+
 #if !__WASM__
             var html = @"<html>
-     <body>
-       <div id = ""content"">This is default text</ div>
+     <body style=""background-color: transparent"">
+         <div id = ""content""></ div>
     </ body>
     </ html>
 ";
@@ -69,7 +74,7 @@ UserControl
         {
             var markdownScript = (await GetEmbeddedFileStreamAsync(GetType(), filename)).ReadToEnd();
 
-            await InvokeScriptAsync(markdownScript);
+            await InvokeScriptAsync(markdownScript, false);
         }
 
         protected abstract Task LoadJavaScript();
@@ -77,27 +82,48 @@ UserControl
 #if !__WASM__
         private void NavigationCompleted(WebView sender, WebViewNavigationCompletedEventArgs args)
         {
+#if __ANDROID__
+            var wv = internalWebView.GetType().GetField("_webView", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(internalWebView) as Android.Webkit.WebView;
+            wv.SetBackgroundColor(Android.Graphics.Color.Transparent);
+#endif
+
+
             LoadJavaScript();
         }
 #endif
 
         protected async Task UpdateHtmlFromScript(string contentScript)
         {
+            if (Foreground is SolidColorBrush colorBrush)
+            {
+                var color = colorBrush.Color;
+                // This is required because default tostring on wasm doesn't come out in the format #RRGGBB or even #AARRGGBB
+                var colorString = $"#{color.R.ToString("X")}{color.G.ToString("X")}{color.B.ToString("X")}";
+                Console.WriteLine($"Color {colorString}");
+                var colorScript = $@"document.getElementById('{HtmlContentId}').style.color = '{colorString}';";
+                await InvokeScriptAsync(colorScript);
+            }
+
             var script = $@"document.getElementById('{HtmlContentId}').innerHTML = {contentScript};";
             await InvokeScriptAsync(script);
         }
 
-        public async Task InvokeScriptAsync(string scriptToRun)
+        public async Task<string> InvokeScriptAsync(string scriptToRun, bool resizeAfterScript = true)
         {
-                scriptToRun = ReplaceLiterals(scriptToRun);
+            scriptToRun = ReplaceLiterals(scriptToRun);
 
 #if !__WASM__
             var source = new CancellationTokenSource();
-            await internalWebView.InvokeScriptAsync(
+            var result = await internalWebView.InvokeScriptAsync(
 #if !WINDOWS_UWP
                 source.Token,
 #endif
-                "eval", new []{scriptToRun}).AsTask();
+                "eval", new[] { scriptToRun }).AsTask();
+            if (resizeAfterScript)
+            {
+                await ResizeToContent();
+            }
+            return result;
 #else
             var script = $"javascript:eval(\"{scriptToRun}\");";
             Console.Error.WriteLine(script);
@@ -106,10 +132,18 @@ UserControl
             {
                 var result = WebAssemblyRuntime.InvokeJS(script);
                 Console.WriteLine($"Result: {result}");
+
+                if (resizeAfterScript)
+                {
+                    await ResizeToContent();
+                }
+
+                return result;
             }
             catch (Exception e)
             {
                 Console.Error.WriteLine("FAILED " + e);
+                return null;
             }
 
 #endif
@@ -137,6 +171,24 @@ UserControl
             }
 
             return assemblyType.GetTypeInfo().Assembly.GetManifestResourceStream(manifestName);
+        }
+        public async Task ResizeToContent()
+        {
+            var documentRoot =
+#if __WASM__
+                $"document.getElementById('{HtmlContentId}')";
+#else
+                          $"document.body";
+#endif
+
+
+            var heightString = await InvokeScriptAsync($"{documentRoot}.scrollHeight.toString()",
+                false);
+            int height;
+            if (int.TryParse(heightString, out height))
+            {
+                this.Height = height;
+            }
         }
     }
 }

@@ -8,9 +8,12 @@
 
     <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
         <ScrollViewer>
-            <Border Background="White">
-                <local:MarkedControl x:Name="markedCtrl" />
-            </Border>
+            <StackPanel >
+                <local:MarkedControl x:Name="markedCtrl"
+                                     MarkdownText="# Here is a cheat sheet:"/>
+                <local:MarkedControl 
+                                     MarkdownText="# Here is a cheat sheet:2" />
+            </StackPanel>
         </ScrollViewer>
     </Grid>
 </Page>

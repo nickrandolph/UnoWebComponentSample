@@ -14,7 +14,7 @@ namespace WebContentSample
 
         private async void markedCtrl_MarkedReady(object sender, EventArgs args)
         {
-            await markedCtrl.LoadMarkdownFromFile("SharedAssets.md");
+            //await markedCtrl.LoadMarkdownFromFile("SharedAssets.md");
         }
     }
 }
