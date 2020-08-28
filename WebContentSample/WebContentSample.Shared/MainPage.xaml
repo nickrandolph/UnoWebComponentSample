@@ -7,13 +7,20 @@
       mc:Ignorable="d">
 
     <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
-        <ScrollViewer>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition />
+        </Grid.RowDefinitions>
+        <!--<ScrollViewer>-->
             <StackPanel >
                 <local:MarkedControl x:Name="markedCtrl"
                                      MarkdownText="# Here is a cheat sheet:"/>
                 <local:MarkedControl 
                                      MarkdownText="# Here is a cheat sheet:2" />
             </StackPanel>
-        </ScrollViewer>
+        <!--</ScrollViewer>-->
+        <Grid Grid.Row="1">
+				<local:PdfControl />
+		</Grid>
     </Grid>
 </Page>

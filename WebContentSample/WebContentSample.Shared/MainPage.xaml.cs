@@ -9,7 +9,7 @@ namespace WebContentSample
         {
             InitializeComponent();
 
-            markedCtrl.MarkedReady += markedCtrl_MarkedReady;
+            //markedCtrl.MarkedReady += markedCtrl_MarkedReady;
         }
 
         private async void markedCtrl_MarkedReady(object sender, EventArgs args)

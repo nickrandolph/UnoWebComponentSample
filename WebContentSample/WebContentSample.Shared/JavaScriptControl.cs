@@ -47,26 +47,34 @@ UserControl
             Loaded += JavaScriptControl_Loaded;
         }
 
-        private string HtmlContentId =>
-#if __WASM__
-            this.GetHtmlId();
-#else
-            "content";
-#endif
+        protected string HtmlContentId { get; }=
+//#if __WASM__
+//            this.GetHtmlId();
+//#else
+            "content-" + System.Guid.NewGuid().ToString();
+//#endif
 
-        private void JavaScriptControl_Loaded(object sender, Windows.UI.Xaml.RoutedEventArgs e)
+        protected virtual string HtmlBody => $@"<div id = ""{HtmlContentId}""></ div>";
+
+
+        private async void JavaScriptControl_Loaded(object sender, Windows.UI.Xaml.RoutedEventArgs e)
         {
 
 #if !__WASM__
-            var html = @"<html>
+            var html = $@"<html>
      <body style=""background-color: transparent"">
-         <div id = ""content""></ div>
+         {HtmlBody}
     </ body>
     </ html>
 ";
             internalWebView.NavigateToString(html);
 #else
-            LoadJavaScript();
+            var script = $@"document.getElementById('{this.GetHtmlId()}').innerHTML = '{HtmlBody}';";
+            Console.WriteLine(script);
+            await InvokeScriptAsync(script, false);
+
+
+            await LoadJavaScript();
 #endif
         }
 
@@ -175,11 +183,11 @@ UserControl
         public async Task ResizeToContent()
         {
             var documentRoot =
-#if __WASM__
+//#if __WASM__
                 $"document.getElementById('{HtmlContentId}')";
-#else
-                          $"document.body";
-#endif
+//#else
+//                          $"document.body";
+//#endif
 
 
             var heightString = await InvokeScriptAsync($"{documentRoot}.scrollHeight.toString()",
